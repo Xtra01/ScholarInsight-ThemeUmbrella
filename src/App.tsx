@@ -10,7 +10,8 @@ import {
   ExternalLink,
   FileSpreadsheet,
   PieChart as PieChartIcon,
-  LayoutDashboard
+  LayoutDashboard,
+  Upload
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
@@ -156,6 +157,32 @@ export default function App() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Themes");
     XLSX.writeFile(wb, "ResearchThemes.xlsx");
+  };
+
+  const handleImportThemes = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const bstr = evt.target?.result;
+      const wb = XLSX.read(bstr, { type: 'binary' });
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+      const data = XLSX.utils.sheet_to_json(ws) as any[];
+
+      const importedThemes: ThemeUmbrella[] = data.map(item => ({
+        theme: item['Tema Adı'] || '',
+        description: item['Açıklama'] || '',
+        count: Number(item['Skor/Yoğunluk']) || 0,
+        relatedAreas: item['İlgili Araştırma Alanları'] ? item['İlgili Araştırma Alanları'].split(',').map((s: string) => s.trim()) : []
+      }));
+
+      if (importedThemes.length > 0) {
+        setThemes(importedThemes);
+      }
+    };
+    reader.readAsBinaryString(file);
   };
 
   const clearResearchers = () => {
@@ -410,6 +437,22 @@ export default function App() {
                       Araştırmacı Listesinden Veri Çek
                     </button>
                   )}
+
+                  <div className="relative mt-3">
+                    <input
+                      type="file"
+                      accept=".xlsx, .xls"
+                      onChange={handleImportThemes}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      id="theme-import"
+                    />
+                    <button
+                      className="w-full py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-emerald-100 border-dashed flex items-center justify-center gap-2"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Daha Önceki Analizi (Excel) İçe Aktar
+                    </button>
+                  </div>
                 </div>
               </div>
 
