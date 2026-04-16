@@ -144,6 +144,20 @@ export default function App() {
     setIsAnalyzing(false);
   };
 
+  const exportThemesToExcel = () => {
+    const dataToExport = themes.map(t => ({
+      'Tema Adı': t.theme,
+      'Açıklama': t.description,
+      'Skor/Yoğunluk': t.count,
+      'İlgili Araştırma Alanları': t.relatedAreas?.join(', ')
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Themes");
+    XLSX.writeFile(wb, "ResearchThemes.xlsx");
+  };
+
   const clearResearchers = () => {
     if (confirm('Tüm listeyi temizlemek istediğinize emin misiniz?')) {
       setResearchers([]);
@@ -404,7 +418,16 @@ export default function App() {
                 {themes.length > 0 ? (
                   <>
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                      <h3 className="text-md font-semibold mb-6">Tema Dağılımı</h3>
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-md font-semibold">Tema Dağılımı</h3>
+                        <button
+                          onClick={exportThemesToExcel}
+                          className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition-all flex items-center gap-2 shadow-lg shadow-emerald-100"
+                        >
+                          <FileSpreadsheet className="w-4 h-4" />
+                          Temaları Excel Olarak İndir
+                        </button>
+                      </div>
                       <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={themes}>
